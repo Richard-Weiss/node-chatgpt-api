@@ -112,7 +112,7 @@ One of the main difference is the implementation of a "jailbreak" mode.  Which h
 2. Copy the [PandoraAI fork](https://github.com/Richard-Weiss/PandoraAI).
 3. open the `.env.example` file in the node-chatgpt-api folder and fill the bolded entries.
    1. API_HOST: Through which IP address or URL the API is reachable. If you leave the default, you can only use it on your own client. If you use a local IPv4 address, you can use it from other devices in your network etc.
-   2. **BING_COOKIE**: The cookie that's used to retrieve a request. You can look at this [repo](https://github.com/vsakkas/sydney.py#prerequisites) for instruction on how to retrieve it.
+   2. **BING_COOKIE**: The cookie that's used to retrieve a request. You can look at this [repo](https://github.com/vsakkas/sydney.py#prerequisites) for instruction on how to retrieve it. Make sure your cookie contains the keys `MUID`, `_U` and `_RwBf` to be able to use all features, including plugins.
    3. CONTEXT: You can include additional information about yourself or the AI here.
    4. **NODE_GPT_PATH**: This is used for the `start` powershell script. Enter the absolute path of the `node-chatgpt-api` folder.
    5. **PANDORA_PATH**: Same as above, but enter the `PandoraAI` folder's absolute path.

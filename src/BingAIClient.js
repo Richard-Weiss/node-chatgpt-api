@@ -81,14 +81,8 @@ export default class BingAIClient {
     async createNewConversation() {
         this.headers = {
             accept: 'application/json',
-            'accept-language': 'en-US,en;q=0.9',
-            'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36 Edg/113.0.1774.50',
+            'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0',
             cookie: this.options.cookies || (this.options.userToken ? `_U=${this.options.userToken}` : undefined),
-            Referer: 'https://www.bing.com/search?q=Bing+AI&showconv=1',
-            'Referrer-Policy': 'origin-when-cross-origin',
-            // Workaround for request being blocked due to geolocation
-            // 'x-forwarded-for': '1.1.1.1', // 1.1.1.1 seems to no longer work.
-            ...(this.options.xForwardedFor ? { 'x-forwarded-for': this.options.xForwardedFor } : {}),
         };
         // filter undefined values
         this.headers = Object.fromEntries(
@@ -106,7 +100,7 @@ export default class BingAIClient {
         }
         const turingCreateURL = new URL(`${this.options.host}/turing/conversation/create`);
         const searchParams = new URLSearchParams({
-            bundleVersion: '1.1366.4',
+            bundleVersion: '1.1381.15',
         });
         turingCreateURL.search = searchParams.toString();
         const response = await fetch(turingCreateURL, fetchOptions);
@@ -215,26 +209,49 @@ export default class BingAIClient {
     }
 
     /**
-     * Resolves the ids of the plugins and returns an array to be used for the request.
+     * Resolves the id and hex value of the plugins and returns an array to be used for the request.
      * @param {Object} plugins Object containing the plugins to use as strings.
-     * @returns The resolved array as it should be used in a request.
+     * @returns {Object[]} The resolved array of plugin objects that can be used later.
      */
     static async #resolvePlugins(plugins) {
         const pluginLookup = {
-            instacart: '46664d33-1591-4ce8-b3fb-ba1022b66c11',
-            kayak: 'd6be744c-2bd9-432f-95b7-76e103946e34',
-            klarna: '5f143ea3-8c80-4efd-9515-185e83b7cf8a',
-            openTable: '543a7b1b-ebc6-46f4-be76-00c202990a1b',
-            shop: '39e3566a-d481-4d99-82b2-6d739b1e716e',
+            instacart: {
+                id: '46664d33-1591-4ce8-b3fb-ba1022b66c11',
+                hex: '0A402EDC',
+            },
+            kayak: {
+                id: 'd6be744c-2bd9-432f-95b7-76e103946e34',
+                hex: 'C0BB4EAB',
+            },
+            klarna: {
+                id: '5f143ea3-8c80-4efd-9515-185e83b7cf8a',
+                hex: '606E9E5D',
+            },
+            openTable: {
+                id: '543a7b1b-ebc6-46f4-be76-00c202990a1b',
+                hex: 'E05D72DE',
+            },
+            search: {
+                id: 'c310c353-b9f0-4d76-ab0d-1dd5e979cf68',
+                hex: '',
+            },
+            shop: {
+                id: '39e3566a-d481-4d99-82b2-6d739b1e716e',
+                hex: '2E842A93',
+            },
+            suno: {
+                id: '22b7f79d-8ea4-437e-b5fd-3e21f09f7bc1',
+                hex: '014CB21D',
+            },
         };
         let resolvedPlugins = [];
         if (plugins) {
             const keys = Object.keys(plugins);
             const filteredPlugins = keys.filter(key => plugins[key]);
             for (const plugin of filteredPlugins) {
-                const id = pluginLookup[plugin];
-                if (id) {
-                    resolvedPlugins.push({ id });
+                const pluginData = pluginLookup[plugin];
+                if (pluginData) {
+                    resolvedPlugins.push(pluginData);
                 }
             }
         } else {
@@ -564,6 +581,8 @@ export default class BingAIClient {
         }
         const modelVersionString = this.#resolveModelVersion(modelVersion);
         const imageBaseURL = 'https://www.bing.com/images/blob?bcid=';
+        const pluginIds = plugins.map(plugin => ({ id: plugin.id }));
+        const pluginHex = plugins.map(plugin => plugin.hex).filter(Boolean);
 
         let userMessageSuffix;
         if (useUserSuffixMessage === true) {
@@ -602,6 +621,7 @@ export default class BingAIClient {
                         'gencontentv3',
                         ...(modelVersionString !== '' ? [modelVersionString] : []),
                         ...(noSearch !== undefined ? [noSearch] : []),
+                        ...pluginHex,
                     ],
                     allowedMessageTypes: [
                         'ActionRequest',
@@ -640,7 +660,7 @@ export default class BingAIClient {
                         'codecreatorcf',
                         'cacmuidarb',
                     ],
-                    plugins,
+                    plugins: pluginIds,
                     traceId: genRanHex(32),
                     isStartOfSession: invocationId === 0,
                     message: {
@@ -748,11 +768,12 @@ export default class BingAIClient {
                             return;
                         }
                         // Usable later when displaying internal processes, but should be discarded for now.
-                        if (messages[0]?.messageType === 'InternalLoaderMessage'
+                        if (messages[0]?.messageType === 'GenerateContentQuery'
                             || messages[0]?.messageType === 'InternalContentDescription'
+                            || messages[0]?.messageType === 'InternalLoaderMessage'
                             || messages[0]?.messageType === 'InternalSearchQuery'
                             || messages[0]?.messageType === 'InternalSearchResult'
-                            || messages[0]?.messageType === 'GenerateContentQuery'
+                            || messages[0]?.messageType === 'Progress'
                             || messages[0]?.messageType === 'RenderCardRequest') {
                             return;
                         }
