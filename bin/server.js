@@ -120,6 +120,7 @@ server.post('/conversation', async (request, reply) => {
             useBase64,
             useUserSuffixMessage,
             plugins,
+            persona,
         } = body;
         const messageOptions = {
             conversationId: body.conversationId ? body.conversationId.toString() : undefined,
@@ -140,6 +141,7 @@ server.post('/conversation', async (request, reply) => {
             ...(clientToUseForMessage === 'bing' && { useBase64 }),
             ...(clientToUseForMessage === 'bing' && { useUserSuffixMessage }),
             ...(clientToUseForMessage === 'bing' && { plugins }),
+            ...(clientToUseForMessage === 'bing' && { persona }),
             onProgress,
             abortController,
         };

@@ -343,6 +343,7 @@ export default class BingAIClient {
             invocationId = 0,
             toneStyle,
             modelVersion,
+            persona,
             context = jailbreakConversationId ? process.env.CONTEXT : null,
             parentMessageId = jailbreakConversationId === true ? crypto.randomUUID() : null,
             abortController = new AbortController(),
@@ -455,6 +456,7 @@ export default class BingAIClient {
             useBase64: opts.useBase64,
             useUserSuffixMessage: opts.useUserSuffixMessage,
             noSearch,
+            persona,
         };
 
         const ws = await this.createWebSocketConnection(conversationSignature);
@@ -567,6 +569,7 @@ export default class BingAIClient {
             useBase64,
             useUserSuffixMessage,
             noSearch,
+            persona,
         } = webSocketParameters;
         let toneOption;
         if (toneStyle === 'creative') {
@@ -584,6 +587,7 @@ export default class BingAIClient {
         const imageBaseURL = 'https://www.bing.com/images/blob?bcid=';
         const pluginIds = plugins.map(plugin => ({ id: plugin.id }));
         const pluginHex = plugins.map(plugin => plugin.hex).filter(Boolean);
+        const personaString = this.#resolvePersona(persona);
 
         let userMessageSuffix;
         if (useUserSuffixMessage === true) {
@@ -620,6 +624,7 @@ export default class BingAIClient {
                         'eredirecturl',
                         'clgalileo',
                         'gencontentv3',
+                        ...(personaString !== '' ? [personaString] : []),
                         ...(modelVersionString !== '' ? [modelVersionString] : []),
                         ...(noSearch !== undefined ? [noSearch] : []),
                         ...pluginHex,
@@ -700,6 +705,33 @@ export default class BingAIClient {
         }
 
         return optionSetString;
+    }
+
+    /**
+     * This method converts persona names from simple names to technical names.
+     * @param {String | undefined} persona Simple name of the persona to use.
+     * @returns {String} Technical name of the persona to use.
+     */
+    static #resolvePersona(persona) {
+        let personaString = '';
+        switch (persona) {
+            case 'designer':
+                personaString = 'ai_persona_designer_gpt';
+                break;
+            case 'vacation_planner':
+                personaString = 'flux_vacation_planning_helper_v14';
+                break;
+            case 'cooking_assistant':
+                personaString = 'flux_cooking_helper_v14';
+                break;
+            case 'fitness_trainer':
+                personaString = 'flux_fitness_helper_v14';
+                break;
+            default:
+                personaString = '';
+        }
+
+        return personaString;
     }
 
     /**
