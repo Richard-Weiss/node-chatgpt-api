@@ -143,7 +143,7 @@ This section will elaborate the parameters that are specific to Bing Chat that a
 - `invocationId`: The index of the message. Empty for first message and gets incremented by one for each ended user turn.
 - `imageBase64`: (optional) base64 string of an image bing should analyze
 - `imageURL`: (optional) URL of an image that Bing should analyze. Has precedence over imageBase64 if both parameters are passed.
-- `modelVersion`: Used to toggle between models. Passing `gpt-4 turbo` will use GPT-4 Turbo. Any other string uses the default model defined by the optionSet
+- `modelVersion`: Used to toggle between models. Passing `gpt-4 turbo` will use GPT-4 Turbo (be aware that Turbo is Copilot Pro only at the present date). Any other string uses the default model defined by the optionSet
 - `systemMessage`: Used when enabling jailbreak mode. Add another system message to the AI.
 - `showSuggestions`: Toggles the three suggestions by the suggestion AI to be returned
 - `useBase64`: Adds a section to the system message to tell the AI to use base64
