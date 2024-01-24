@@ -75,7 +75,6 @@ export default class BingAIClient {
         const {
             invocationId = 0,
             toneStyle,
-            modelVersion,
             persona,
             context = jailbreakConversationId ? process.env.CONTEXT : null,
             parentMessageId = jailbreakConversationId === true ? crypto.randomUUID() : null,
@@ -183,7 +182,6 @@ export default class BingAIClient {
             clientId,
             conversationId,
             toneStyle,
-            modelVersion,
             ...imageUploadResult && { imageUploadResult },
             plugins,
             useBase64: opts.useBase64,
@@ -375,7 +373,6 @@ export default class BingAIClient {
             clientId,
             conversationId,
             toneStyle,
-            modelVersion,
             imageUploadResult = undefined,
             plugins,
             useBase64,
@@ -383,23 +380,12 @@ export default class BingAIClient {
             noSearch,
             persona,
         } = webSocketParameters;
-        let toneOption;
-        if (toneStyle === 'creative') {
-            toneOption = 'h3imaginative';
-        } else if (toneStyle === 'precise') {
-            toneOption = 'h3precise';
-        } else if (toneStyle === 'fast') {
-            // new "Balanced" mode, allegedly GPT-3.5 turbo
-            toneOption = 'galileo';
-        } else {
-            // old "Balanced" mode
-            toneOption = 'harmonyv3';
-        }
-        const modelVersionString = this.#resolveModelVersion(modelVersion);
+
         const imageBaseURL = 'https://www.bing.com/images/blob?bcid=';
-        const pluginIds = plugins.map(plugin => ({ id: plugin.id })).filter(Boolean);
+        const pluginIds = plugins.map(plugin => ({ id: plugin.id, category: 1 })).filter(Boolean);
         const pluginOptionSets = plugins.map(plugin => plugin.optionSet).filter(Boolean);
         const personaString = this.#resolvePersona(persona);
+        const tone = this.#resolveTone(toneStyle);
 
         let userMessageSuffix;
         if (useUserSuffixMessage === true) {
@@ -415,29 +401,22 @@ export default class BingAIClient {
         const userWebsocketRequest = {
             arguments: [
                 {
-                    source: 'cib',
+                    source: 'cib-ccp',
                     optionsSets: [
                         'nojbfedge', // Not included in standard message, but won't work without.
                         'nlu_direct_response_filter',
                         'deepleo',
                         'disable_emoji_spoken_text',
                         'responsible_ai_policy_235',
-                        // "enablemm",
+                        // 'enablemm',
                         'dv3sugg',
-                        // "autosave",
-                        'iyxapbing',
-                        'iycapbing',
-                        toneOption,
-                        'spktxtibmoff',
-                        'enelecintl',
-                        'gndelec',
-                        'gndlogcf',
-                        'gptvmodel2',
+                        // 'autosave',
+                        'uquopt',
+                        'bicfluxv2',
+                        'langdtwb',
+                        'fluxprod',
                         'eredirecturl',
-                        'clgalileo',
-                        'gencontentv3',
                         ...(personaString !== '' ? [personaString] : []),
-                        ...(modelVersionString !== '' ? [modelVersionString] : []),
                         ...(noSearch !== undefined ? [noSearch] : []),
                         ...pluginOptionSets,
                     ],
@@ -447,39 +426,17 @@ export default class BingAIClient {
                         'Context',
                         'InternalSearchQuery',
                         'InternalSearchResult',
-                        // 'Disengage', unwanted
                         'InternalContentDescription',
                         'InternalLoaderMessage',
                         'Progress',
-                        // 'RenderCardRequest', not useful
-                        // 'AdsQuery', unwanted
-                        // 'SemanticSerp',// usually not encountered, related to semantic web search
                         'GenerateContentQuery',
                         'SearchQuery',
+                        'GeneratedCode',
                     ],
-                    sliceIds: [
-                        'cruiseenableux',
-                        'adssqovr',
-                        'cruiseenable',
-                        'e2eperf',
-                        'arankc_1_9_9',
-                        'rankcf',
-                        'multlingcf',
-                        'stibmoff',
-                        'caccnctat3',
-                        'styleoffwpt',
-                        'preall20',
-                        '1117gndelec',
-                        '1115rai289s0',
-                        '117invocmaxs0',
-                        '1025gptv_v2',
-                        'fluxnosearch',
-                        '1115fluxv14l',
-                        'codecreatorcf',
-                        'cacmuidarb',
-                    ],
+                    sliceIds: [],
                     plugins: pluginIds,
                     traceId: genRanHex(32),
+                    gptId: persona,
                     isStartOfSession: invocationId === 0,
                     message: {
                         ...imageUploadResult
@@ -488,8 +445,9 @@ export default class BingAIClient {
                             && { originalImageUrl: `${imageBaseURL}${imageUploadResult.processBlobId}` },
                         author: 'user',
                         text: useUserSuffixMessage ? userMessageSuffix : message,
-                        messageType: jailbreakConversationId ? 'SearchQuery' : 'Chat',
+                        messageType: 'Chat',
                     },
+                    tone,
                     conversationSignature,
                     participant: {
                         id: clientId,
@@ -506,19 +464,6 @@ export default class BingAIClient {
         return userWebsocketRequest;
     }
 
-    static #resolveModelVersion(modelVersion) {
-        let optionSetString = '';
-        switch (modelVersion) {
-            case 'gpt-4 turbo':
-                optionSetString = 'gpt4t';
-                break;
-            default:
-                optionSetString = '';
-        }
-
-        return optionSetString;
-    }
-
     /**
      * This method converts persona names from simple names to technical names.
      * @param {String | undefined} persona Simple name of the persona to use.
@@ -530,13 +475,13 @@ export default class BingAIClient {
             case 'designer':
                 personaString = 'ai_persona_designer_gpt';
                 break;
-            case 'vacation_planner':
+            case 'travel':
                 personaString = 'flux_vacation_planning_helper_v14';
                 break;
-            case 'cooking_assistant':
+            case 'cooking':
                 personaString = 'flux_cooking_helper_v14';
                 break;
-            case 'fitness_trainer':
+            case 'fitness':
                 personaString = 'flux_fitness_helper_v14';
                 break;
             case 'copilot':
@@ -602,6 +547,28 @@ export default class BingAIClient {
         }
 
         return resolvedPlugins;
+    }
+
+    /**
+     * This method converts toneStyles from simple names to technical names.
+     * @param {String | undefined} toneStyle Simple name of the tone to use.
+     * @returns {String} Technical name of the tone to use.
+     */
+    static #resolveTone(toneStyle) {
+        let tone;
+        if (toneStyle === 'creative') {
+            tone = 'CreativeClassic';
+        } else if (toneStyle === 'turbo') {
+            tone = 'Creative';
+        } else if (toneStyle === 'precise') {
+            tone = 'Precise';
+        } else if (toneStyle === 'balanced') {
+            tone = 'Balanced';
+        } else {
+            tone = 'CreativeClassic';
+        }
+
+        return tone;
     }
 
     /**
@@ -677,7 +644,8 @@ export default class BingAIClient {
                             || messages[0]?.messageType === 'InternalSearchQuery'
                             || messages[0]?.messageType === 'InternalSearchResult'
                             || (messages[0]?.messageType === 'Progress' && messages[0]?.contentOrigin !== 'CodeInterpreter')
-                            || messages[0]?.messageType === 'RenderCardRequest') {
+                            || messages[0]?.messageType === 'RenderCardRequest'
+                            || messages[0]?.messageType === 'GeneratedCode') {
                             return;
                         }
                         if (messages[0]?.contentOrigin === 'CodeInterpreter' && messages[0]?.invocation) {
