@@ -139,16 +139,16 @@ This section will elaborate the parameters that are specific to Bing Chat that a
 - `conversationSignature`: Empty for first request and used for subsequent requests
 - `conversationId`: Empty for first request and used for subsequent requests
 - `jailbreakConversationId`: Set to `true` for first request to enable jailbreak mode and used for subsequent requests
-- `toneStyle`: The mode Bing should use. Valid values are `["creative", "fast", "precise"]`
+- `toneStyle`: The mode Bing should use. Valid values are `["creative", "turbo", "balanced", "precise"]`
 - `invocationId`: The index of the message. Empty for first message and gets incremented by one for each ended user turn.
 - `imageBase64`: (optional) base64 string of an image bing should analyze
 - `imageURL`: (optional) URL of an image that Bing should analyze. Has precedence over imageBase64 if both parameters are passed.
-- `modelVersion`: Used to toggle between models. Passing `gpt-4 turbo` will use GPT-4 Turbo (be aware that Turbo is Copilot Pro only at the present date). Any other string uses the default model defined by the optionSet
-- `systemMessage`: Used when enabling jailbreak mode. Add another system message to the AI.
+- `systemMessage`: Used when jailbreak mode is enabled. Adds another system message to the AI.
 - `showSuggestions`: Toggles the three suggestions by the suggestion AI to be returned
 - `useBase64`: Adds a section to the system message to tell the AI to use base64
-- `userUserSuffixMessage`: Adds a message by the user reading `Continue the message in the current Context` which will prevent the moderation filter to trigger for user messages, but may confuse the AI
+- `useUserSuffixMessage`: Adds a message by the user reading `Continue the message in the current Context` which will prevent the moderation filter to trigger for user messages, but may confuse the AI
 - `plugins`: Enables the plugins in the array with the value `true`. See the `#resolvePlugins` method in the `BingAIClient.js` class for valid plugins
+- `persona`: Enables a Microsoft custom GPT. See the `#resolvePersona` method in the `BingAIClient.js` class for valid plugins
 
 
 # ChatGPT API
