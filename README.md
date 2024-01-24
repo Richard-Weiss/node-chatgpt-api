@@ -148,7 +148,7 @@ This section will elaborate the parameters that are specific to Bing Chat that a
 - `useBase64`: Adds a section to the system message to tell the AI to use base64
 - `useUserSuffixMessage`: Adds a message by the user reading `Continue the message in the current Context` which will prevent the moderation filter to trigger for user messages, but may confuse the AI
 - `plugins`: Enables the plugins in the array with the value `true`. See the `#resolvePlugins` method in the `BingAIClient.js` class for valid plugins
-- `persona`: Enables a Microsoft custom GPT. See the `#resolvePersona` method in the `BingAIClient.js` class for valid plugins
+- `persona`: Enables a Microsoft custom GPT. See the `#resolvePersona` method in the `BingAIClient.js` class for valid personas
 
 
 # ChatGPT API
