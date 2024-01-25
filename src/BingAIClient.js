@@ -871,7 +871,7 @@ export default class BingAIClient {
                 headers: {
                     accept: '*/*',
                     'content-type': 'multipart/form-data; boundary=----WebKitFormBoundary',
-                    cookie: this.options.cookies || `_U=${this.options.userToken}`,
+                    cookie:  `${this.options.cookies || `_U=${this.options.userToken}`}; SRCHHPGUSR=HV=${Date.now()}`,
                     Referer: 'https://www.bing.com/search?q=Bing+AI&showconv=1&FORM=hpcodx',
                     'Referrer-Policy': 'origin-when-cross-origin',
                 },
