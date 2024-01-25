@@ -442,7 +442,7 @@ export default class BingAIClient {
                         ...imageUploadResult
                             && { imageUrl: `${imageBaseURL}${imageUploadResult.blobId}` },
                         ...imageUploadResult
-                            && { originalImageUrl: `${imageBaseURL}${imageUploadResult.processBlobId}` },
+                            && { originalImageUrl: `${imageBaseURL}${imageUploadResult.blobId}` },
                         author: 'user',
                         text: useUserSuffixMessage ? userMessageSuffix : message,
                         messageType: 'Chat',
@@ -838,48 +838,39 @@ export default class BingAIClient {
     }
 
     /**
-     * Method to upload image to blob storage to later be incorporated in the user message.
-     * The returned "blobId" is used in the originalImageUrl like this:
-     * imageUrl:    'https://www.bing.com/images/blob?bcid=RN4.o2iFDe0FQHyYKZKmmOyc4Fs-.....-A'
-     * The returned "processBlobId" is used in the imageUrl like this:
-     * originalImageUrl:            'https://www.bing.com/images/blob?bcid=RH8TZGRI5-0FQHyYKZKmmOyc4Fs-.....zQ'
+     * Method to upload an image to blob storage to later be incorporated in the user message.
      * @param {string} imageBase64 The base64 string of the image to upload to blob storage.
-     * @returns {object} An object containing the "blobId" and "processBlobId" for the image.
+     * @returns {object} An object containing the "blobId" for the image.
      */
     async uploadImage(imageBase64) {
-        let data;
+        let uploadResult;
         try {
             const knowledgeRequestBody = {
                 imageInfo: {},
                 knowledgeRequest: {
                     invokedSkills: ['ImageById'],
                     subscriptionId: 'Bing.Chat.Multimodal',
-                    invokedSkillsRequestData: { enableFaceBlur: true }, // enableFaceBlur has to be enabled, or you won't get a processBlobId
+                    invokedSkillsRequestData: { enableFaceBlur: false },
                     convoData: { convoid: '', convotone: 'Creative' }, // convoId seems to be irrelevant
                 },
             };
 
-            const body = '------WebKitFormBoundary\r\n'
-            + 'Content-Disposition: form-data; name="knowledgeRequest"\r\n\r\n'
-            + `${JSON.stringify(knowledgeRequestBody)}\r\n`
-            + '------WebKitFormBoundary\r\n'
-            + 'Content-Disposition: form-data; name="imageBase64"\r\n\r\n'
-            + `${imageBase64}\r\n`
-            + '------WebKitFormBoundary--\r\n';
+            const formData = new FormData();
+            formData.append('knowledgeRequest', JSON.stringify(knowledgeRequestBody));
+            formData.append('imageBase64', imageBase64);
 
             const response = await fetch('https://www.bing.com/images/kblob', {
                 headers: {
-                    accept: '*/*',
-                    'content-type': 'multipart/form-data; boundary=----WebKitFormBoundary',
+                    accept: 'application/json',
                     cookie: this.options.cookies || `_U=${this.options.userToken}`,
                     Referer: 'https://www.bing.com/search?q=Bing+AI&showconv=1&FORM=hpcodx',
                     'Referrer-Policy': 'origin-when-cross-origin',
                 },
-                body,
+                body: formData,
                 method: 'POST',
             });
             if (response.ok) {
-                data = await response.json();
+                uploadResult = await response.json();
             } else {
                 throw new Error(`HTTP error! Error: ${response.error}, Status: ${response.status}`);
             }
@@ -887,7 +878,7 @@ export default class BingAIClient {
             console.error(error);
         }
 
-        return data;
+        return uploadResult;
     }
 
     /**
