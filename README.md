@@ -149,6 +149,7 @@ This section will elaborate the parameters that are specific to Bing Chat that a
 - `useUserSuffixMessage`: Adds a message by the user reading `Continue the message in the current Context` which will prevent the moderation filter to trigger for user messages, but may confuse the AI
 - `plugins`: Enables the plugins in the array with the value `true`. See the `#resolvePlugins` method in the `BingAIClient.js` class for valid plugins
 - `persona`: Enables a Microsoft custom GPT. See the `#resolvePersona` method in the `BingAIClient.js` class for valid personas
+- `accountType`: The type of account the cookie is associated with. Valid values are `free` and `pro`. Defaults to `free` if not set.
 
 
 # ChatGPT API

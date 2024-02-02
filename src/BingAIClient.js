@@ -68,6 +68,7 @@ export default class BingAIClient {
             conversationSignature,
             clientId,
             plugins,
+            accountType,
             systemMessage,
         } = opts;
         systemMessage = systemMessage || this.options.systemMessage;
@@ -173,7 +174,8 @@ export default class BingAIClient {
         const imageBase64 = imageURL ? await BingAIClient.getBase64FromImageUrl(imageURL) : opts?.imageBase64;
         const imageUploadResult = imageBase64 ? await this.uploadImage(imageBase64) : undefined;
         const noSearch = plugins?.search === false ? 'nosearchall' : undefined;
-        plugins = await BingAIClient.#resolvePlugins(plugins);
+        plugins = BingAIClient.#resolvePlugins(plugins);
+        accountType = BingAIClient.#resolveAccountType(accountType);
         const webSocketParameters = {
             message,
             invocationId,
@@ -188,6 +190,7 @@ export default class BingAIClient {
             useUserSuffixMessage: opts.useUserSuffixMessage,
             noSearch,
             persona,
+            accountType,
         };
 
         const ws = await this.#createWebSocketConnection(conversationSignature);
@@ -379,13 +382,14 @@ export default class BingAIClient {
             useUserSuffixMessage,
             noSearch,
             persona,
+            accountType,
         } = webSocketParameters;
 
         const imageBaseURL = 'https://www.bing.com/images/blob?bcid=';
         const pluginIds = plugins.map(plugin => ({ id: plugin.id, category: 1 })).filter(Boolean);
         const pluginOptionSets = plugins.map(plugin => plugin.optionSet).filter(Boolean);
         const personaString = this.#resolvePersona(persona);
-        const tone = this.#resolveTone(toneStyle);
+        const tone = this.#resolveTone(toneStyle, accountType);
 
         let userMessageSuffix;
         if (useUserSuffixMessage === true) {
@@ -440,9 +444,9 @@ export default class BingAIClient {
                     isStartOfSession: invocationId === 0,
                     message: {
                         ...imageUploadResult
-                            && { imageUrl: `${imageBaseURL}${imageUploadResult.blobId}` },
+                        && { imageUrl: `${imageBaseURL}${imageUploadResult.blobId}` },
                         ...imageUploadResult
-                            && { originalImageUrl: `${imageBaseURL}${imageUploadResult.blobId}` },
+                        && { originalImageUrl: `${imageBaseURL}${imageUploadResult.blobId}` },
                         author: 'user',
                         text: useUserSuffixMessage ? userMessageSuffix : message,
                         messageType: 'Chat',
@@ -462,6 +466,25 @@ export default class BingAIClient {
         };
 
         return userWebsocketRequest;
+    }
+
+    /**
+     * Resolves the accountType and returns the string to use for further usage.
+     * @param {String} accountType String description of account type.
+     * @returns {String} The resolved account type to use.
+     */
+    static #resolveAccountType(accountType) {
+        let resolvedAccountType;
+        switch (accountType) {
+            case 'pro':
+                resolvedAccountType = 'pro';
+                break;
+            case 'free':
+            default:
+                resolvedAccountType = 'free';
+        }
+
+        return resolvedAccountType;
     }
 
     /**
@@ -499,7 +522,7 @@ export default class BingAIClient {
      * @param {Object} plugins Object containing the plugins to use as strings.
      * @returns {Object[]} The resolved array of plugin objects that can be used later.
      */
-    static async #resolvePlugins(plugins) {
+    static #resolvePlugins(plugins) {
         const pluginLookup = {
             codeInterpreter: {
                 optionSet: 'codeint',
@@ -552,20 +575,24 @@ export default class BingAIClient {
     /**
      * This method converts toneStyles from simple names to technical names.
      * @param {String | undefined} toneStyle Simple name of the tone to use.
+     * @param {String} accountType Account type which influences modes.
      * @returns {String} Technical name of the tone to use.
      */
-    static #resolveTone(toneStyle) {
+    static #resolveTone(toneStyle, accountType) {
         let tone;
-        if (toneStyle === 'creative') {
-            tone = 'CreativeClassic';
-        } else if (toneStyle === 'turbo') {
-            tone = 'Creative';
-        } else if (toneStyle === 'precise') {
-            tone = 'Precise';
-        } else if (toneStyle === 'balanced') {
-            tone = 'Balanced';
-        } else {
-            tone = 'CreativeClassic';
+        switch (toneStyle) {
+            case 'turbo':
+                tone = 'Creative';
+                break;
+            case 'precise':
+                tone = 'Precise';
+                break;
+            case 'balanced':
+                tone = 'Balanced';
+                break;
+            case 'creative':
+            default:
+                tone = accountType === 'pro' ? 'CreativeClassic' : 'Creative';
         }
 
         return tone;
@@ -625,7 +652,7 @@ export default class BingAIClient {
                             return;
                         }
                         if (messages[0]?.contentType === 'IMAGE') {
-                        // You will never get a message of this type without 'gencontentv3' being on.
+                            // You will never get a message of this type without 'gencontentv3' being on.
                             bicIframe = this.bic.genImageIframeSsr(
                                 messages[0].text,
                                 messages[0].messageId,
@@ -718,12 +745,12 @@ export default class BingAIClient {
                         // The moderation filter triggered, so just return the text we have so far
                         if (
                             opts.jailbreakConversationId
-                        && (
-                            stopTokenFound
-                            || event.item.messages[0].topicChangerText
-                            || event.item.messages[0].offense === 'OffenseTrigger'
-                            || (event.item.messages.length > 1 && event.item.messages[1].contentOrigin === 'Apology')
-                        )
+                            && (
+                                stopTokenFound
+                                || event.item.messages[0].topicChangerText
+                                || event.item.messages[0].offense === 'OffenseTrigger'
+                                || (event.item.messages.length > 1 && event.item.messages[1].contentOrigin === 'Apology')
+                            )
                         ) {
                             if (!replySoFar) {
                                 replySoFar = 'I need some time to process your message. Please wait a moment.';
@@ -734,7 +761,7 @@ export default class BingAIClient {
                             delete eventMessage.suggestedResponses;
                         }
                         if (bicIframe) {
-                        // the last messages will be a image creation event if bicIframe is present.
+                            // the last messages will be a image creation event if bicIframe is present.
                             let i = messages.length - 1;
                             while (eventMessage?.contentType === 'IMAGE' && i > 0) {
                                 eventMessage = messages[i -= 1];
@@ -751,7 +778,7 @@ export default class BingAIClient {
                             }
                         }
                         if ((opts.showSuggestions === false || opts.useBase64 === true)
-                                && eventMessage.suggestedResponses) {
+                            && eventMessage.suggestedResponses) {
                             delete eventMessage.suggestedResponses;
                         }
                         resolve({
@@ -762,7 +789,7 @@ export default class BingAIClient {
                         return;
                     }
                     case 7: {
-                    // [{"type":7,"error":"Connection closed with an error.","allowReconnect":true}]
+                        // [{"type":7,"error":"Connection closed with an error.","allowReconnect":true}]
                         clearTimeout(messageTimeout);
                         this.constructor.cleanupWebSocketConnection(ws);
                         reject(new Error(event.error || 'Connection closed with an error.'));
