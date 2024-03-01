@@ -78,7 +78,7 @@ export default class BingAIClient {
             parentMessageId = jailbreakConversationId === true ? crypto.randomUUID() : null,
             persona,
             personalization,
-            systemMessage = this.options.systemMessage,
+            systemMessage = process.env.SYSTEM_MESSAGE,
             toneStyle,
         } = opts;
 
@@ -649,6 +649,7 @@ export default class BingAIClient {
             });
 
             let bicIframe;
+            let sunoPromise;
             ws.on('message', async (data) => {
                 const objects = data.toString().split('\u001E');
                 const events = objects.map((object) => {
@@ -686,6 +687,10 @@ export default class BingAIClient {
                                 return error.message;
                             });
                             return;
+                        }
+                        if (messages[0]?.contentType === 'SUNO') {
+                            const requestId = messages[0]?.hiddenText.split('=')[1];
+                            sunoPromise = this.getSunoResult(requestId);
                         }
                         // Usable later when displaying internal processes, but should be discarded for now.
                         if (messages[0]?.messageType === 'GenerateContentQuery'
@@ -797,6 +802,30 @@ export default class BingAIClient {
                                 eventMessage.adaptiveCards[0].body[0].text += imgIframe;
                             } else {
                                 eventMessage.text += `<br>${imgIframe}`;
+                                eventMessage.adaptiveCards[0].body[0].text = eventMessage.text;
+                            }
+                        }
+                        if (sunoPromise) {
+                            const sunoResult = await sunoPromise;
+                            if (sunoResult) {
+                                const {
+                                    duration,
+                                    title,
+                                    requestId,
+                                } = sunoResult;
+                                const generateURL = id => `https://th.bing.com/th?&id=${id}`;
+                                const audioURL = generateURL(`OIG.a_${requestId}`);
+                                const imageURL = generateURL(`OIG.i_${requestId}`);
+                                const videoURL = generateURL(`OIG.v_${requestId}`);
+                                const sunoDisplayResult = {
+                                    title,
+                                    duration,
+                                    audioURL,
+                                    imageURL,
+                                    videoURL,
+                                };
+                                eventMessage.text += '\nSuno results:';
+                                eventMessage.text += `\n${JSON.stringify(sunoDisplayResult, null, 2)}`;
                                 eventMessage.adaptiveCards[0].body[0].text = eventMessage.text;
                             }
                         }
@@ -929,6 +958,112 @@ export default class BingAIClient {
         }
 
         return uploadResult;
+    }
+
+    async getSunoResult(requestId) {
+        const skey = await this.#getSunoMetadata(requestId);
+        if (skey) {
+            const sunoMedia = await this.#getSunoMedia(requestId, skey);
+            return sunoMedia;
+        }
+        return null;
+    }
+
+    async #getSunoMetadata(requestId) {
+        const fetchURL = new URL('https://www.bing.com/videos/music');
+        const searchParams = new URLSearchParams({
+            vdpp: 'suno',
+            kseed: '7500',
+            SFX: '2',
+            q: '',
+            iframeid: crypto.randomUUID(),
+            requestId,
+        });
+        fetchURL.search = searchParams.toString();
+        const response = await fetch(fetchURL, {
+            headers: {
+                accept: 'text/html',
+                cookie: this.options.cookies,
+            },
+            method: 'GET',
+        });
+        if (response.status === 200) {
+            const document = await response.text();
+
+            const patternSkey = /(?<=skey=)[^&]+/;
+            const matchSkey = document.match(patternSkey);
+            const skey = matchSkey ? matchSkey[0] : null;
+
+            const patternIG = /(?<=IG:"|IG:\s")[0-9A-F]{32}(?=")/;
+            const matchIG = document.match(patternIG);
+            const ig = matchIG ? matchIG[0] : null;
+
+            return { skey, ig };
+        } else {
+            console.error(`HTTP error! Error: ${response.error}, Status: ${response.status}`);
+            return null;
+        }
+    }
+
+    async #getSunoMedia(requestId, sunoMetadata) {
+        let sfx = 1;
+        const maxTries = 30;
+        const { skey, ig } = sunoMetadata;
+
+        let rawResponse;
+        const result = await new Promise((resolve, reject) => {
+            const intervalId = setInterval(async () => {
+                const fetchURL = new URL('https://www.bing.com/videos/api/custom/music');
+                const searchParams = new URLSearchParams({
+                    skey,
+                    safesearch: 'Moderate',
+                    vdpp: 'suno',
+                    requestId,
+                    ig,
+                    iid: 'vsn',
+                    sfx: sfx.toString(),
+                });
+                fetchURL.search = searchParams.toString();
+
+                const response = await fetch(fetchURL, {
+                    headers: {
+                        accept: '*/*',
+                        cookie: this.options.cookies,
+                    },
+                    method: 'GET',
+                });
+                const body = await response.json();
+                rawResponse = JSON.parse(body.RawResponse);
+                const { status } = rawResponse;
+                const done = status === 'complete';
+
+                if (done) {
+                    clearInterval(intervalId);
+                    resolve();
+                } else {
+                    sfx++;
+                    if (sfx === maxTries) {
+                        reject(new Error('Maximum number of tries exceeded'));
+                    }
+                }
+            }, 2000);
+        })
+            .then(() => {
+                if (rawResponse?.status === 'complete') {
+                    return {
+                        duration: rawResponse.duration,
+                        title: rawResponse.gptPrompt,
+                        requestId: rawResponse.id,
+                    };
+                } else {
+                    throw Error('Suno response could not be completed.');
+                }
+            })
+            .catch((err) => {
+                console.error(err);
+                return null;
+            });
+        return result;
     }
 
     /**
