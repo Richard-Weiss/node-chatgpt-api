@@ -811,21 +811,26 @@ export default class BingAIClient {
                                 const {
                                     duration,
                                     title,
+                                    musicalStyle,
                                     requestId,
                                 } = sunoResult;
                                 const generateURL = id => `https://th.bing.com/th?&id=${id}`;
                                 const audioURL = generateURL(`OIG.a_${requestId}`);
                                 const imageURL = generateURL(`OIG.i_${requestId}`);
                                 const videoURL = generateURL(`OIG.v_${requestId}`);
+                                const sunoURL = `https://cdn1.suno.ai/${requestId}.mp4`;
                                 const sunoDisplayResult = {
-                                    title,
-                                    duration,
-                                    audioURL,
-                                    imageURL,
-                                    videoURL,
+                                    sunoOutput: {
+                                        title,
+                                        duration,
+                                        musicalStyle,
+                                        audioURL,
+                                        imageURL,
+                                        videoURL,
+                                        sunoURL,
+                                    },
                                 };
-                                eventMessage.text += '\nSuno results:';
-                                eventMessage.text += `\n${JSON.stringify(sunoDisplayResult, null, 2)}`;
+                                eventMessage.text += `\n${JSON.stringify(sunoDisplayResult, null, 4)}`;
                                 eventMessage.adaptiveCards[0].body[0].text = eventMessage.text;
                             }
                         }
@@ -1053,6 +1058,7 @@ export default class BingAIClient {
                     return {
                         duration: rawResponse.duration,
                         title: rawResponse.gptPrompt,
+                        musicalStyle: rawResponse.musicalStyle,
                         requestId: rawResponse.id,
                     };
                 } else {
