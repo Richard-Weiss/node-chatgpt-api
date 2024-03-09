@@ -21,7 +21,6 @@ module.exports = {
       }],
     'linebreak-style': 0,
     'arrow-parens': [2, 'as-needed', { 'requireForBlockBody': true }],
-    'no-plusplus': ['error', { 'allowForLoopAfterthoughts': true }],
     'no-console': 'off',
     'import/extensions': 'off',
     'no-use-before-define': ['error', {
@@ -31,5 +30,7 @@ module.exports = {
     'no-param-reassign': 'off',
     'no-continue': 'off',
     'no-restricted-syntax': 'off',
+    'no-else-return': 'off',
+    'no-plusplus': 'off',
   },
 };

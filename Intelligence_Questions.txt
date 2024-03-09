@@ -1,4 +1,4 @@
-Q1: Andrew is free from 11 am to 3 pm, Joanne is free from noon to 2 pm and then 3:30 pm to 5 pm. Hannah is available at noon for half an hour, and then 4 pm to 6 pm. What are some options for start times for a 30 minute meeting for Andrew, Hannah, and Joanne?
+Q1: Andrew is free from 11 am to 3 pm, Joanne is free from noon to 2 pm and then 3:30 pm to 5 pm. Hannah is available at noon for half an hour, and then 4 pm to 6 pm. What are some options for start times for a 30-minute meeting for Andrew, Hannah, and Joanne?
 A1: 12 PM
 R1: Reliable solvable with Bing Precise.
 
@@ -11,9 +11,9 @@ A3: 2nd
 Q4a: I have a bookshelf in my living room with five books in it. The books are arranged from left to right. The position are always relative to the current bookshelf. After a gap is created, it is closed by shifting the books together. The arrangement is red, blue, green, yellow and black. I take the third book and put it on my coffee table. Then I take the book that is now in the fourth book position and put it to the right of the second book. Then I take the first book and put it to the right of the fourth book. What color is the second book in the bookshelf?
 
 A4a:
-Initial state: 
+Initial state:
 red, blue, green, yellow, black
-Removing third book: 
+Removing third book:
 red, blue, yellow, black
 Shifting fourth book:
 red, blue, black, yellow
@@ -60,10 +60,10 @@ R4b: Not solvable by any mode without special prompting, but very close. Emotion
 Q5: I have three apples today and I ate one yesterday. How many apples do I have today?
 A5: You have 3 apples today.
 
-Q6: Please count the occurrence of every letter (case doesn't matter) in the following text using Python and format the output in a table:
-`White Horse" is a single by Taylor Swift (pictured) from her second studio album, Fearless. A country pop song, the ballad is driven by a finger-picked guitar and includes piano and cello accents. The lyrics incorporate fairy-tale imagery of princesses and white horses: a narrator is heartbroken that her boyfriend is not an ideal figure and leaves her town to find another partner. Big Machine Records released the track to US country radio on December 8, 2008. Music critics lauded "White Horse" for its somber production and portrayal of heartbreak, but some found the lyrics uncreative. In 2010, the song won Grammy Awards for Best Country Song and Best Female Country Vocal Performance. In the US, the single peaked at number 13 on the Billboard Hot 100 and number 2 on the Hot Country Songs chart. It was also certified in the US, Australia and Canada. Following a 2019 dispute regarding the ownership of Swift's back catalog, she re-recorded the song for her album Fearless (Taylor's Version).`
+Q6: Please count the occurrence of every letter (case doesn't matter) in the following text using Python, include all letters, sort by letter and format the output in a table. Output your code below the table:
+<Text>
 
-Q7: You are given three water jugs with capacities of 5 liters, 3 liters, and 2 liters, respectively. The 5-liter jug is full of water, but the other two are empty. You need to measure out exactly 4 liters of water using only these jugs. You have to preserve all of the water and one container has to have 4 liters in the end state. Explain the solution with the fewest steps.
+Q7: You are given three water jugs with capacities of 5 liters, 3 liters, and 2 liters, respectively. The 5-liter jug is full of water, but the other two are empty. You need to measure out exactly 4 liters of water using only these jugs. You have to preserve all the water and one container has to have 4 liters in the end state. Explain the solution with the fewest steps.
 A7:
 Step 0:
 State 0:
@@ -90,5 +90,37 @@ State 3:
 2 liter container: 0 liter
 R7: GPT-4 Turbo tries to fill the 5 liter container or empty containers. Consistently solvable by Precise.
 
-Q8: I have a ball in a cup in my hands and I am inside the elevator on the first floor. I turn the cup upside down and ride the elevator to the second floor. It stops at the second floor and I take the stairs to the third floor. I place my cup on the table. What floor is the ball on?
+Q8: I have a ball in a cup in my hands, and I am inside the elevator on the first floor. I turn the cup upside down and ride the elevator to the second floor. It stops at the second floor and I take the stairs to the third floor. I place my cup on the table. What floor is the ball on?
 A8: Depending on whether you turned the cup on your hand it's on the third floor between the cup and your hand. If not, it is on whichever floor the elevator is on, unless moved. If the elevator hasn't moved, it's on the second floor.
+
+Q9: I want to plan a meeting between 3 people. Here's the schedule they sent me:
+Candice: I'm free Tue 11-2pm, Thu 12-5pm and Fri 10-11am
+Bhuvan: I can make any weekday before 1pm, except Tuesday when I'm on holiday
+Erin: I'm free only at 10am on Thursday and Friday, or I could do any time Wednesday morning
+When can everyone attend a one hour meeting?
+A9: Friday at 10-11am
+R9: Not solved reliably by Turbo or Precise, but very close with Precise performing better. Oscillating between Thursday at 10-11am and Friday at 10-11am.
+
+Q10: May's grandmother has 4 kids, one named North, another called South and one named East. What is the last child's name?
+A10: There's not enough information to determine the name. The name of the child would be the name of May's parent. However, if you follow the naming pattern, the most likely name would be West.
+R10: Not solvable by any model yet.
+
+Q11: I'm looking into a mirror. In my hands, I'm holding two post-it notes, the one in my left hand says 'left' and the one in my right hand says 'right'. I reach my hands out and press the notes to the mirror, so I can read them. My friend stands behind me, and drops a ball to my side. Looking into the mirror, I see the ball fall under the note that says 'left'. Which of my arms should I use to grab the ball?
+A11: The left arm, since the left post-it note is on the same side as the left arm.
+R11: Not solvable by any model, because of the mirror reversal red herring.
+
+Q12: Tobias and Frank are playing Heads-up Poker against each other. Both use their entire net worth in this 1 poker hand, and they have roughly the same net worth.
+Both decide to just go all in with their hands without first looking at them. Since they went all in, they both show their hands before the flop is laid out.
+Tobias is holding A♣, A♥ and Frank is holding 7♠, 2♥.
+The flop comes and it is A♠, 7♥, 3♠.
+Tobias can not believe his eyes, not only is he holding 2 Aces, but he also made a set of Aces on the flop!
+Then the turn card arrives and it is the 7♣.
+Now Tobias has a full-house, even better than before. He says 'man I am lucky today, sorry Frank'.
+Afterward Tobias arrives at home. He is severely depressed and tries to figure out how to pay this month's rent.
+What was the River card exactly and what's the probability of it occurring?
+A12: 7♦ and 1/44(~2.27%)
+R12: Solvable by Turbo and Precise, however they struggle with the probability (not using 44)
+
+Q13: 9285 One number is correct but in the wrong position; 1937 Two numbers are correct but in the wrong position; 5201 One number is correct and in the right position; 6507 nothing is correct; 8524 Two numbers are correct but in the wrong position
+A13:3841
+R13: Not solvable by any model

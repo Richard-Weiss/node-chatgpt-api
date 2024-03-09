@@ -420,7 +420,7 @@ export default class BingAIClient {
                         'langdtwb',
                         'fluxprod',
                         'eredirecturl',
-                        ...(toneStyle === 'turbo' && accountType === 'free' ? ['gpt4tmncnp'] : []),
+                        ...(toneStyle === 'turbo' ? ['gpt4tmncnp'] : []),
                         ...(personaString !== '' ? [personaString] : []),
                         ...(personalization === true ? [
                             'enable_user_consent',
